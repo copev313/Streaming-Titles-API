@@ -20,10 +20,4 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
-# SessionLocal = sessionmaker(
-#     autocommit=True,
-#     autoflush=False,
-#     bind=engine
-# )
-
 Base = declarative_base()
