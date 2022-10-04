@@ -1,0 +1,8 @@
+{
+    "name": "streaming-titles-api",
+    "version": "1.0.0",
+    "author": "Evan Cope",
+    "devDependencies": {
+        "serverless-python-requirements": "^5.4.0"
+    }
+}

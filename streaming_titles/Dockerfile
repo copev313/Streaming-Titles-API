@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=off \
@@ -23,3 +23,4 @@ EXPOSE 8000
 
 ENTRYPOINT ["doppler", "run", "--"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# doppler run -- uvicorn main:app --host 0.0.0.0 --port 8000

@@ -2,3 +2,5 @@
 /.vscode
 */.env
 __pycache__
+aws-credentials
+node_modules
