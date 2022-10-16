@@ -2,7 +2,6 @@
     A module for the basic / main routing of the app.
 """
 from fastapi import APIRouter
-# from fastapi.responses import FileResponse
 
 
 router = APIRouter(
@@ -17,11 +16,6 @@ async def health():
         "status": "Success",
         "detail": "The API is up and running!"
     }
-
-
-# @router.get("/favicon.ico", include_in_schema=False)
-# async def favicon():
-#     return FileResponse("favicon.ico")
 
 
 @router.get("/")

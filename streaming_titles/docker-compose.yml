@@ -2,8 +2,10 @@ version: '3'
 
 services:
   streaming-titles-api:
+    image: streaming-titles-api
+    container_name: streaming-titles-api
     build: .
     env_file:
       - ./.env
     ports:
-      - 8000:8000
+      - "8000:8000"

@@ -1,19 +1,9 @@
 FROM python:3.10-slim-bullseye
 
-# ARG DATABASE_URL
-# ARG DOPPLER_TOKEN
-# ARG PORT
-# ARG ENVIRONMENT
-
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
-
-# ENV DATABASE_URL=${DATABASE_URL}    \
-#     DOPPLER_TOKEN=${DOPPLER_TOKEN}  \
-#     PORT=${PORT}                    \
-#     ENVIRONMENT=${ENVIRONMENT}
 
 WORKDIR /app
 
@@ -31,4 +21,3 @@ EXPOSE 8000
 
 ENTRYPOINT ["doppler", "run", "--"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-# doppler run -- uvicorn main:app --host 0.0.0.0 --port 8000

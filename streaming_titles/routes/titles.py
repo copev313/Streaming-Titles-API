@@ -128,10 +128,10 @@ async def create_title_record(new_title: CreateTitleSchema):
             **new_title.dict()
         }
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail="ERROR: Failed to create title record."
+            detail=f"ERROR: Failed to create title record. {e} "
         )
 
 
@@ -155,11 +155,11 @@ async def update_title_record(pk: int, record_update: UpdateTitleSchema):
         updated_record = await get_title(pk=int(pk))
         return updated_record
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=(
-                f"ERROR: Failed to update record with primary key: {pk}."
+                f"ERROR: Failed to update record with primary key: {pk}. {e} "
             )
         )
 
