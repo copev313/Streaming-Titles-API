@@ -14,7 +14,7 @@ router = APIRouter(
 async def health():
     return {
         "status": "Success",
-        "detail": "The API is up and running!"
+        "detail": "The service is up and running."
     }
 
 

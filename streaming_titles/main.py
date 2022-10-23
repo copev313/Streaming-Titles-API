@@ -8,32 +8,33 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from database.session import db, engine, Base
-from routes import base, titles
+from routes import auth, base, titles
 
 
 app = FastAPI(
     title="Streaming Titles API",
     version="0.0.2",
     prefix="/api/v1",
+    # Default docs URL is overriden below to customise the Swagger UI:
     docs_url=None,
+    #openapi_url=None,
     redoc_url=None,
     description=(
         "A RESTful API for interacting with titles from various "
-        "streaming platforms.")
+        "streaming platforms."
+    )
 )
 
 # Mount static directory for Swagger UI:
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Configure CORS middleware:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        # "http://localhost:8000",
-        "http://localhost",
-    ],
+    allow_origins=[ "http://localhost" ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=[ "*" ],
+    allow_headers=[ "*" ],
 )
 
 
@@ -61,7 +62,7 @@ async def swagger_ui_html(request: Request) -> HTMLResponse:
     oauth2_redirect_url = app.swagger_ui_oauth2_redirect_url
     if oauth2_redirect_url:
         oauth2_redirect_url = root_path + oauth2_redirect_url
-    return get_swagger_ui_html(
+    response =  get_swagger_ui_html(
         openapi_url=openapi_url,
         title=app.title + " - Swagger UI",
         oauth2_redirect_url=oauth2_redirect_url,
@@ -69,6 +70,7 @@ async def swagger_ui_html(request: Request) -> HTMLResponse:
         swagger_favicon_url="/static/projector.ico",
         swagger_ui_parameters=app.swagger_ui_parameters,
     )
+    return response
 
 
 @app.get("/")
@@ -79,6 +81,6 @@ async def root():
     }
 
 
-
 app.include_router(base.router)
 app.include_router(titles.router)
+app.include_router(auth.router)

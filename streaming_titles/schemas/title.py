@@ -52,20 +52,20 @@ class UpdateTitleSchema(BaseModel):
     alongside the `model.dict(...)` method, with arguments `exclude_unset=True`
     or `exclude_none=True`.
     """
-    pass
-    # show_id: Optional[str] = None
-    # title: Optional[str] = None
-    # type: Optional[TitleType] = None
-    # director: Optional[str] = None
-    # cast: Optional[Union[List[str], List[None]]] = None
-    # country: Optional[str] = None
-    # date_added: Optional[str] = None
-    # release_year: Optional[str] = None
-    # rating: Optional[str] = None
-    # duration: Optional[str] = None
-    # genres: Optional[Union[List[str], List[None]]] = None
-    # description: Optional[str] = None
-    # platform: Optional[Platform] = None
+    # pass
+    show_id: Optional[str] = None
+    title: Optional[str] = None
+    type: Optional[TitleType] = None
+    director: Optional[str] = None
+    cast: Optional[Union[List[str], List[None]]] = None
+    country: Optional[str] = None
+    date_added: Optional[str] = None
+    release_year: Optional[str] = None
+    rating: Optional[str] = None
+    duration: Optional[str] = None
+    genres: Optional[Union[List[str], List[None]]] = None
+    description: Optional[str] = None
+    platform: Optional[Platform] = None
 
 
 class DeletedTitleSchema(GeneralResponseSchema):

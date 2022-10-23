@@ -3,7 +3,8 @@
 """
 import math
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security.api_key import APIKey
 from sqlalchemy.sql import select, insert, update, delete
 
 from models.title import TitleRecord
@@ -15,6 +16,7 @@ from schemas.title import (
     UpdateTitleSchema
 )
 from database.session import db
+from routes.auth import get_api_key
 
 
 router = APIRouter(
@@ -45,7 +47,7 @@ async def get_all_titles(skip: int = 0, limit: int = 25):
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while trying to get all titles."
         )
 
@@ -66,9 +68,12 @@ async def get_titles_paginated(page: int = 1, limit: int = 25):
     try:
         skip = (page - 1) * limit
         all_titles_response = await get_all_titles(skip=skip, limit=limit)
+        total_records_count = await db.execute(
+            select(TitleRecord).count()
+        )
         total = all_titles_response["total"]
         titles = all_titles_response["titles"]
-        total_pgs = math.ceil(total / limit)
+        total_pgs = math.ceil(int(total_records_count) / limit)
         has_next = page < total_pgs
         has_prev = page > 1
         return {
@@ -82,7 +87,7 @@ async def get_titles_paginated(page: int = 1, limit: int = 25):
 
     except Exception:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
                 "ERROR: Failed to get titles by page. "
                 f"(page={page}, limit={limit})"
@@ -99,20 +104,31 @@ async def get_title(pk: int):
     pk : int
         The primary key of the title record.
     """
-    query = select(TitleRecord).where(TitleRecord.pk == int(pk))
-    title = await db.fetch_one(query=query)
-    if title is None:
+    try:
+        query = select(TitleRecord).where(TitleRecord.pk == int(pk))
+        title = await db.fetch_one(query=query)
+        if title is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    f"Title record not found for primary key: {pk}"
+                )
+            )
+        return title
+
+    except Exception:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
-                f"Title record not found for primary key: {pk}"
+                "ERROR: Failed to get title by primary key. "
+                f"(pk={pk})"
             )
         )
-    return title
 
 
 @router.post("/titles", status_code=201, response_model=TitleOutSchema)
-async def create_title_record(new_title: CreateTitleSchema):
+async def create_title_record(new_title: CreateTitleSchema,
+                              api_key: APIKey = Depends(get_api_key)):
     """Endpoint for creating a new title record.
 
     Parameters
@@ -130,13 +146,15 @@ async def create_title_record(new_title: CreateTitleSchema):
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"ERROR: Failed to create title record. {e} "
         )
 
 
 @router.patch("/titles/{pk}", status_code=200, response_model=TitleOutSchema)
-async def update_title_record(pk: int, record_update: UpdateTitleSchema):
+async def update_title_record(pk: int,
+                              record_update: UpdateTitleSchema,
+                              api_key: APIKey = Depends(get_api_key)):
     """Endpoint for updating a title record. Only the fields that are provided
     will be updated.
 
@@ -149,15 +167,16 @@ async def update_title_record(pk: int, record_update: UpdateTitleSchema):
         The updated title record data.
     """
     try:
-        query = update(TitleRecord).where(TitleRecord.pk == int(pk))\
-                    .values(**record_update.dict(exclude_unset=True))
+        query = update(TitleRecord).where(TitleRecord.pk == int(pk)).values(
+            **record_update.dict(exclude_unset=True)
+        )
         await db.execute(query=query)
         updated_record = await get_title(pk=int(pk))
         return updated_record
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
                 f"ERROR: Failed to update record with primary key: {pk}. {e} "
             )
@@ -165,7 +184,8 @@ async def update_title_record(pk: int, record_update: UpdateTitleSchema):
 
 
 @router.delete("/titles/{pk}", status_code=204)
-async def delete_title_record(pk: int):
+async def delete_title_record(pk: int,
+                              api_key: APIKey = Depends(get_api_key)):
     """Endpoint for deleting a title record.
 
     Parameters
@@ -179,7 +199,7 @@ async def delete_title_record(pk: int):
 
     except Exception:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
                 f"ERROR: Failed to delete record with primary key: {pk}."
             )
