@@ -7,7 +7,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from database.session import db, engine, Base
@@ -16,7 +16,7 @@ from routes import auth, base, titles
 
 app = FastAPI(
     title="Streaming Titles API",
-    version="0.1.1",
+    version="0.1.2",
     prefix="/api/v1",
     # Default docs URL is overriden below to customise the Swagger UI:
     docs_url=None,
@@ -66,7 +66,7 @@ async def shutdown():
     await db.disconnect()
 
 
-@app.get("/docs", include_in_schema=False)
+@app.get("/api/v1/docs", include_in_schema=False)
 async def swagger_ui_html(request: Request) -> HTMLResponse:
     """This endpoint serves the Swagger UI generated documentation, with a
     custom favicon.
@@ -88,13 +88,15 @@ async def swagger_ui_html(request: Request) -> HTMLResponse:
     )
     return response
 
+@app.get("/docs", include_in_schema=False)
+async def docs_redirect(request: Request) -> RedirectResponse:
+    root_path = request.scope.get("root_path", "").rstrip("/")
+    return RedirectResponse(root_path + "/api/v1/docs")
 
-@app.get("/")
-async def root():
-    return {
-        "status": "Warning",
-        "detail": "No such path. Please use '/api/v1' in future requests.",
-    }
+@app.get("/", include_in_schema=False)
+async def root_redirect(request: Request) -> RedirectResponse:
+    root_path = request.scope.get("root_path", "").rstrip("/")
+    return RedirectResponse(root_path + "/api/v1")
 
 
 app.include_router(base.router)
