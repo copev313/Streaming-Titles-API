@@ -1,13 +1,9 @@
 import os
 
 import databases
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 
-
-# Load environment variables from .env file:
-load_dotenv()
 
 # Initialize asynchronus database object:
 db = databases.Database(os.getenv("DATABASE_URL"))
