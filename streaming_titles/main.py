@@ -1,6 +1,9 @@
 """
     Main module containing the FastAPI app and lambda handler.
 """
+import time
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -13,7 +16,7 @@ from routes import auth, base, titles
 
 app = FastAPI(
     title="Streaming Titles API",
-    version="0.0.2",
+    version="0.1.1",
     prefix="/api/v1",
     # Default docs URL is overriden below to customise the Swagger UI:
     docs_url=None,
@@ -31,12 +34,25 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Configure CORS middleware:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ "http://localhost" ],
+    allow_origins=[ 
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:" + os.getenv("PORT", "8000"),
+        "https://streaming-titles-api.up.railway.app",
+    ],
     allow_credentials=True,
-    allow_methods=[ "*" ],
+    allow_methods=[ "GET", "POST", "PATCH", "DELETE", "OPTIONS" ],
     allow_headers=[ "*" ],
 )
 
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """Middleware to add the process time to the response headers. """
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 @app.on_event("startup")
 async def startup():
@@ -64,7 +80,7 @@ async def swagger_ui_html(request: Request) -> HTMLResponse:
         oauth2_redirect_url = root_path + oauth2_redirect_url
     response =  get_swagger_ui_html(
         openapi_url=openapi_url,
-        title=app.title + " - Swagger UI",
+        title=app.title,
         oauth2_redirect_url=oauth2_redirect_url,
         init_oauth=app.swagger_ui_init_oauth,
         swagger_favicon_url="/static/projector.ico",
