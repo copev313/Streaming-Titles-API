@@ -32,18 +32,18 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configure CORS middleware:
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[ 
-        "http://localhost",
-        "http://localhost:3000",
-        "http://localhost:" + os.getenv("PORT", "8000"),
-        "https://streaming-titles-api.up.railway.app",
-    ],
-    allow_credentials=True,
-    allow_methods=[ "GET", "POST", "PATCH", "DELETE", "OPTIONS" ],
-    allow_headers=[ "*" ],
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[ 
+#         "http://localhost",
+#         "http://localhost:3000",
+#         "http://localhost:" + os.getenv("PORT", "8000"),
+#         "https://streaming-titles-api.up.railway.app",
+#     ],
+#     allow_credentials=True,
+#     allow_methods=[ "GET", "POST", "PATCH", "DELETE", "OPTIONS" ],
+#     allow_headers=[ "*" ],
+# )
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -51,7 +51,7 @@ async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
+    response.headers["X-Process-Time"] = str(round(process_time, 5))
     return response
 
 @app.on_event("startup")
