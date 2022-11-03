@@ -31,7 +31,7 @@ app = FastAPI(
 # Mount static directory for Swagger UI:
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Configure CORS middleware:
+# # Configure CORS middleware:
 # app.add_middleware(
 #     CORSMiddleware,
 #     allow_origins=[ 
@@ -45,14 +45,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 #     allow_headers=[ "*" ],
 # )
 
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    """Middleware to add the process time to the response headers. """
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(round(process_time, 5))
-    return response
+# @app.middleware("http")
+# async def add_process_time_header(request: Request, call_next):
+#     """Middleware to add the process time to the response headers. """
+#     start_time = time.time()
+#     response = await call_next(request)
+#     process_time = time.time() - start_time
+#     response.headers["X-Process-Time"] = str(round(process_time, 5))
+#     return response
 
 @app.on_event("startup")
 async def startup():
