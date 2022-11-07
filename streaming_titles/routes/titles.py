@@ -2,8 +2,9 @@
     All the API routes for the title records.
 """
 import math
+from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security.api_key import APIKey
 from sqlalchemy.sql import select, insert, update, delete
 
@@ -15,6 +16,7 @@ from schemas.title import (
     TitleOutSchema,
     UpdateTitleSchema
 )
+from schemas.enums import Platform, TitleType
 from database.session import db
 from routes.auth import get_api_key
 
@@ -25,8 +27,18 @@ router = APIRouter(
 )
 
 
-@router.get("/titles", response_model=ListTitlesSchema)
-async def get_all_titles(skip: int = 0, limit: int = 25):
+@router.get("/titles", response_model=ListTitlePagesSchema)
+async def get_all_titles(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=25, ge=1),
+    title: Optional[str] = Query(default=None),
+    type: Optional[TitleType] = Query(default=None),
+    release_yr: Optional[int] = Query(default=None),
+    platform: Optional[Platform] = Query(default=None),
+    genres: Optional[List[str]] = Query(default=None),
+    director: Optional[str] = Query(default=None),
+    country: Optional[str] = Query(default=None),
+):
     """Route for getting all titles.
 
     Parameters
@@ -38,17 +50,61 @@ async def get_all_titles(skip: int = 0, limit: int = 25):
         The number of records to return at a time.
     """
     try:
-        query = select(TitleRecord).offset(skip).limit(limit)
-        titles = await db.fetch_all(query=query)
+        filter_by = ()
+        # Filter by title if provided:
+        if title:
+            filter_by += (TitleRecord.title.ilike(f"%{title}%"), )
+        # Filter by type if provided:
+        if type:
+            filter_by += (TitleRecord.type == type, )
+        # Filter by release year if provided:
+        if  release_yr and 2100 > release_yr > 1900:
+            filter_by += (TitleRecord.release_yr == release_yr, )
+        # Filter by platform if provided:
+        if platform:
+            filter_by += (
+                TitleRecord.platform == platform, 
+            )
+        # Filter by genres if provided:
+        if genres:
+            genres_list = [ g.title() for g in genres ]
+            filter_by += (TitleRecord.genres.contains(genres_list), )
+        # Filter by director if provided:
+        if director:
+            filter_by += (TitleRecord.director.ilike(f"%{director}%"), )
+        # Filter by country if provided:
+        if country:
+            filter_by += (TitleRecord.country.ilike(f"%{country}%"), )
+
+        # Determine the query that needs to be run:
+        if filter_by:
+            qry = select(TitleRecord).filter(*filter_by)
+            count_qry = select(TitleRecord.pk).filter(*filter_by)
+        else:
+            qry = select(TitleRecord)
+            count_qry = select(TitleRecord.pk)
+
+        # Query for counting number of results returned:
+        skip = ((page - 1) * limit)
+        count_titles = await db.fetch_all(query=count_qry)
+        record_count = len(count_titles)
+        titles = await db.fetch_all(query=qry.offset(skip).limit(limit))
+        total = int(record_count)
+        total_pgs = math.ceil(total / limit)
+        # Return the response:
         return {
-            "total": len(titles),
-            "titles": titles
+            "total": total,
+            "titles": titles,
+            "total_pages": total_pgs,
+            "page": page,
+            "has_next": page < total_pgs,
+            "has_prev": page > 1
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while trying to get all titles."
+            detail=f"An error occurred while trying to get all titles. | {e} "
         )
 
 

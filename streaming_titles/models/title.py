@@ -1,8 +1,8 @@
 """
     Declares the database model for title record objects.
 """
-from sqlalchemy import ARRAY, Column, Integer, String
-# from sqlalchemy.dialects.postgresql import array
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY
 
 from database.session import Base
 
